@@ -21,6 +21,7 @@ repositories {
 dependencies {
     compileOnly(libs.jetbrains.annotations)
     compileOnly(libs.jspecify)
+    compileOnly(libs.commons.suncalc)
 
     if (hytaleAssets.exists()) {
         compileOnly(files(hytaleAssets))
