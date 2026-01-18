@@ -24,6 +24,7 @@ dependencies {
     compileOnly(libs.jetbrains.annotations)
     compileOnly(libs.jspecify)
     implementation(libs.commons.suncalc)
+    implementation(libs.open.meteo)
 
     if (hytaleAssets.exists()) {
         compileOnly(files(hytaleAssets))
@@ -48,6 +49,7 @@ java {
 tasks {
     shadowJar {
         relocate("org.shredzone.commons.suncalc", "io.github.techtastic.realtimesync.libs.commons.suncalc")
+        relocate("com.openmeteo", "io.github.techtastic.realtimesync.libs.openmeteo")
         minimize()
         archiveClassifier.set("")
     }

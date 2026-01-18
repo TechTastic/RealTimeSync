@@ -6,9 +6,11 @@ import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.universe.world.WorldConfig;
 import io.github.techtastic.realtimesync.config.RealTimeSyncConfig;
 import io.github.techtastic.realtimesync.systems.RealTimeSystems;
+import io.github.techtastic.realtimesync.systems.RealWeatherSystems;
 
 public class RealTimeSyncPlugin extends JavaPlugin {
-    private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
+    public static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
+
     public RealTimeSyncPlugin(JavaPluginInit init) {
         super(init);
         LOGGER.atInfo().log("Hello from %s version %s", this.getName(), this.getManifest().getVersion().toString());
@@ -19,5 +21,7 @@ public class RealTimeSyncPlugin extends JavaPlugin {
     protected void setup() {
         this.getEntityStoreRegistry().registerSystem(new RealTimeSystems.Init());
         this.getEntityStoreRegistry().registerSystem(new RealTimeSystems.Ticking());
+
+        this.getEntityStoreRegistry().registerSystem(new RealWeatherSystems.WorldAddedSystem());
     }
 }

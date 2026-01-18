@@ -1,5 +1,6 @@
 package io.github.techtastic.realtimesync.systems;
 
+import com.hypixel.hytale.builtin.weather.systems.WeatherSystem;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.dependency.Dependency;
 import com.hypixel.hytale.component.dependency.Order;
@@ -45,10 +46,6 @@ public class RealTimeSystems {
         };
     }
 
-    protected static RealTimeSyncConfig getConfig(World world) {
-        return world.getWorldConfig().getPluginConfig().computeIfAbsent(RealTimeSyncConfig.class, c -> new RealTimeSyncConfig(null));
-    }
-
     protected static Instant getRealTime(@Nullable String timezone) {
         ZonedDateTime zonedDateTime;
         if (timezone == null) {
@@ -64,7 +61,7 @@ public class RealTimeSystems {
         public void onSystemAddedToStore(@Nonnull Store<EntityStore> store) {
             World world = store.getExternalData().getWorld();
             WorldTimeResource worldTimeResource = store.getResource(TimeModule.get().getWorldTimeResourceType());
-            Instant realTime = getRealTime(getConfig(world).getTimezone());
+            Instant realTime = getRealTime(RealTimeSyncConfig.getConfig(world).getTimezone());
             worldTimeResource.setGameTime0(realTime);
             world.execute(() -> worldTimeResource.setMoonPhase(getGameMoonPhase(getMoonPhase(realTime)), store));
         }
@@ -72,7 +69,7 @@ public class RealTimeSystems {
         public void onSystemRemovedFromStore(@Nonnull Store<EntityStore> store) {
             World world = store.getExternalData().getWorld();
             WorldConfig worldConfig = world.getWorldConfig();
-            worldConfig.setGameTime(getRealTime(getConfig(world).getTimezone()));
+            worldConfig.setGameTime(getRealTime(RealTimeSyncConfig.getConfig(world).getTimezone()));
             worldConfig.markChanged();
         }
 
@@ -86,7 +83,12 @@ public class RealTimeSystems {
         public void tick(float dt, int systemIndex, @Nonnull Store<EntityStore> store) {
             World world = store.getExternalData().getWorld();
             WorldTimeResource worldTimeResource = store.getResource(TimeModule.get().getWorldTimeResourceType());
-            worldTimeResource.setGameTime0(getRealTime(getConfig(world).getTimezone()));
+            worldTimeResource.setGameTime0(getRealTime(RealTimeSyncConfig.getConfig(world).getTimezone()));
+        }
+
+        @Override
+        public @NonNull Set<Dependency<EntityStore>> getDependencies() {
+            return Set.of(new SystemDependency<>(Order.AFTER, WorldTimeSystems.Ticking.class));
         }
     }
 }
