@@ -1,6 +1,5 @@
 package io.github.techtastic.realtimesync.systems;
 
-import com.hypixel.hytale.component.ResourceType;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.dependency.Dependency;
 import com.hypixel.hytale.component.dependency.Order;
@@ -13,7 +12,6 @@ import com.hypixel.hytale.server.core.modules.time.WorldTimeSystems;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.WorldConfig;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import com.hypixel.hytale.server.core.util.Config;
 import io.github.techtastic.realtimesync.config.RealTimeSyncConfig;
 import org.jspecify.annotations.NonNull;
 
