@@ -14,6 +14,8 @@ import com.hypixel.hytale.server.core.universe.world.WorldConfig;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import io.github.techtastic.realtimesync.config.RealTimeSyncConfig;
 import org.jspecify.annotations.NonNull;
+import org.shredzone.commons.suncalc.MoonIllumination;
+import org.shredzone.commons.suncalc.MoonPhase.Phase;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -23,6 +25,26 @@ import java.time.ZonedDateTime;
 import java.util.Set;
 
 public class RealTimeSystems {
+    protected static Phase getMoonPhase(Instant time) {
+        return MoonIllumination.compute().on(time).execute().getClosestPhase();
+    }
+
+    protected static int getGameMoonPhase(Phase phase) {
+        return switch (phase) {
+            case Phase.FULL_MOON -> 0;
+            case Phase.WAXING_GIBBOUS  -> 1;
+            case Phase.FIRST_QUARTER -> 2;
+            case Phase.WAXING_CRESCENT -> 3;
+            case Phase.NEW_MOON -> 4;
+            default -> switch (phase) { // TODO: Special Handlers Later
+                case Phase.WANING_GIBBOUS -> 1;
+                case Phase.LAST_QUARTER -> 2;
+                case Phase.WANING_CRESCENT -> 3;
+                default -> 0;
+            };
+        };
+    }
+
     protected static RealTimeSyncConfig getConfig(World world) {
         return world.getWorldConfig().getPluginConfig().computeIfAbsent(RealTimeSyncConfig.class, c -> new RealTimeSyncConfig(null));
     }
@@ -42,8 +64,9 @@ public class RealTimeSystems {
         public void onSystemAddedToStore(@Nonnull Store<EntityStore> store) {
             World world = store.getExternalData().getWorld();
             WorldTimeResource worldTimeResource = store.getResource(TimeModule.get().getWorldTimeResourceType());
-            worldTimeResource.setGameTime0(getRealTime(getConfig(world).getTimezone()));
-            world.execute(() -> worldTimeResource.updateMoonPhase(world, store));
+            Instant realTime = getRealTime(getConfig(world).getTimezone());
+            worldTimeResource.setGameTime0(realTime);
+            world.execute(() -> worldTimeResource.setMoonPhase(getGameMoonPhase(getMoonPhase(realTime)), store));
         }
 
         public void onSystemRemovedFromStore(@Nonnull Store<EntityStore> store) {

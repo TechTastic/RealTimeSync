@@ -1,6 +1,8 @@
 plugins {
     `maven-publish`
     id("hytale-mod") version "0.+"
+    id("com.gradleup.shadow") version "9.3.1"
+    java
 }
 
 group = "io.github.techtastic"
@@ -21,7 +23,7 @@ repositories {
 dependencies {
     compileOnly(libs.jetbrains.annotations)
     compileOnly(libs.jspecify)
-    compileOnly(libs.commons.suncalc)
+    implementation(libs.commons.suncalc)
 
     if (hytaleAssets.exists()) {
         compileOnly(files(hytaleAssets))
@@ -36,7 +38,27 @@ java {
         languageVersion = JavaLanguageVersion.of(javaVersion)
     }
 
+    sourceCompatibility = JavaVersion.toVersion(javaVersion)
+    targetCompatibility = JavaVersion.toVersion(javaVersion)
+
     withSourcesJar()
+}
+
+
+tasks {
+    shadowJar {
+        relocate("org.shredzone.commons.suncalc", "io.github.techtastic.realtimesync.libs.commons.suncalc")
+        minimize()
+        archiveClassifier.set("")
+    }
+
+    build {
+        dependsOn(shadowJar)
+    }
+
+    withType<JavaCompile> {
+        options.release.set(25)
+    }
 }
 
 tasks.named<ProcessResources>("processResources") {
