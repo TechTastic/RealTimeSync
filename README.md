@@ -11,7 +11,7 @@ Not only that, but the Timezone is configurable per-world! Simply add the follow
 
 The `Timezone` can be any string parse-able by [`java.time.ZoneId`](https://docs.oracle.com/en/java/javase/23/docs/api/java.base/java/time/ZoneId.html#of(java.lang.String))!
 
-# Potential Future Content
+### Potential Future Content
 - No Sleeping Skips (technically it will still try but be reset immediately atm)
 - Moon Phase Syncing
 - Local Weather Syncing
