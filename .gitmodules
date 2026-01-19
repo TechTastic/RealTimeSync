@@ -1,0 +1,3 @@
+[submodule "libs/MoreMoonPhases"]
+	path = libs/MoreMoonPhases
+	url = https://github.com/TechTastic/MoreMoonPhases
