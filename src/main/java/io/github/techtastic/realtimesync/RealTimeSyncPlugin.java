@@ -21,7 +21,10 @@ public class RealTimeSyncPlugin extends JavaPlugin {
     protected void setup() {
         this.getEntityStoreRegistry().registerSystem(new RealTimeSystems.Init());
         this.getEntityStoreRegistry().registerSystem(new RealTimeSystems.Ticking());
+        this.getEntityStoreRegistry().registerSystem(new RealTimeSystems.Time());
+        this.getEntityStoreRegistry().registerSystem(new RealTimeSystems.NoSleep());
 
         this.getEntityStoreRegistry().registerSystem(new RealWeatherSystems.WorldAddedSystem());
+        this.getEntityStoreRegistry().registerSystem(new RealWeatherSystems.TickingSystem());
     }
 }

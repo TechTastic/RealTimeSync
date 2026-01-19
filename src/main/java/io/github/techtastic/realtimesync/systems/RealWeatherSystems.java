@@ -10,24 +10,25 @@ import com.hypixel.hytale.component.system.StoreSystem;
 import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
 import com.hypixel.hytale.server.core.asset.type.environment.config.Environment;
 import com.hypixel.hytale.server.core.asset.type.environment.config.WeatherForecast;
+import com.hypixel.hytale.server.core.asset.type.gameplay.GameplayConfig;
+import com.hypixel.hytale.server.core.asset.type.gameplay.WorldConfig;
+import com.hypixel.hytale.server.core.asset.type.weather.config.DayTexture;
 import com.hypixel.hytale.server.core.asset.type.weather.config.Weather;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.modules.time.WorldTimeResource;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import com.openmeteo.sdk.WeatherApiResponse;
-import io.github.techtastic.realtimesync.RealTimeSyncPlugin;
 import io.github.techtastic.realtimesync.config.RealTimeSyncConfig;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import org.jspecify.annotations.NonNull;
 
 import javax.annotation.Nonnull;
-import java.util.HashMap;
+import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.Map;
-import java.util.Set;
+import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class RealWeatherSystems {
     protected static String getAPIKey(World world) {
@@ -36,23 +37,7 @@ public class RealWeatherSystems {
 
     public static class WorldAddedSystem extends StoreSystem<EntityStore> {
         @Override
-        public void onSystemAddedToStore(@NonNull Store<EntityStore> store) {
-            AtomicReference<StringBuilder> envs = new AtomicReference<>(new StringBuilder().append("\n"));
-            Environment.getAssetMap().getAssetMap().keySet().forEach(w -> envs.set(envs.get().append("- ").append(w).append("\n")));
-            RealTimeSyncPlugin.LOGGER.atInfo().log(envs.get().toString());
-
-
-            Set<String> weather = Weather.getAssetMap().getAssetMap().keySet();
-            AtomicReference<StringBuilder> str = new AtomicReference<>(new StringBuilder().append("\n### Zone 1:\n"));
-            weather.stream().filter(s -> s.contains("Zone1")).forEach(w -> str.set(str.get().append("- ").append(w).append("\n")));
-            str.set(str.get().append("\n### Zone 2:\n"));
-            weather.stream().filter(s -> s.contains("Zone2")).forEach(w -> str.set(str.get().append("- ").append(w).append("\n")));
-            str.set(str.get().append("\n### Zone 3:\n"));
-            weather.stream().filter(s -> s.contains("Zone3")).forEach(w -> str.set(str.get().append("- ").append(w).append("\n")));
-            str.set(str.get().append("\n### Zone 4:\n"));
-            weather.stream().filter(s -> s.contains("Zone4")).forEach(w -> str.set(str.get().append("- ").append(w).append("\n")));
-            RealTimeSyncPlugin.LOGGER.atInfo().log(str.get().toString());
-        }
+        public void onSystemAddedToStore(@NonNull Store<EntityStore> store) {}
 
         @Override
         public void onSystemRemovedFromStore(@NonNull Store<EntityStore> store) {}
