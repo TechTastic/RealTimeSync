@@ -1,12 +1,7 @@
 package io.github.techtastic.realtimesync.systems;
 
-import com.hypixel.hytale.assetstore.AssetPack;
-import com.hypixel.hytale.builtin.asseteditor.util.AssetStoreUtil;
 import com.hypixel.hytale.builtin.beds.sleep.components.PlayerSleep;
 import com.hypixel.hytale.builtin.beds.sleep.components.PlayerSomnolence;
-import com.hypixel.hytale.builtin.beds.sleep.systems.player.EnterBedSystem;
-import com.hypixel.hytale.builtin.beds.sleep.systems.world.StartSlumberSystem;
-import com.hypixel.hytale.builtin.beds.sleep.systems.world.UpdateWorldSlumberSystem;
 import com.hypixel.hytale.component.*;
 import com.hypixel.hytale.component.dependency.Dependency;
 import com.hypixel.hytale.component.dependency.Order;
@@ -15,15 +10,17 @@ import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.RefChangeSystem;
 import com.hypixel.hytale.component.system.StoreSystem;
 import com.hypixel.hytale.component.system.tick.TickingSystem;
-import com.hypixel.hytale.server.core.asset.AssetModule;
 import com.hypixel.hytale.server.core.modules.time.*;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.WorldConfig;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import io.github.techtastic.realtimesync.RealTimeSyncPlugin;
 import io.github.techtastic.realtimesync.config.RealTimeSyncConfig;
+import io.github.techtastic.realtimesync.event.ecs.RealTimeMoonPhaseChangeEvent;
+import io.github.techtastic.realtimesync.util.MoonUtil;
 import org.jspecify.annotations.NonNull;
 import org.shredzone.commons.suncalc.MoonIllumination;
-import org.shredzone.commons.suncalc.MoonPhase.Phase;
+import org.shredzone.commons.suncalc.MoonPhase;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -32,50 +29,45 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Set;
 
+/**
+ * This class holds a series of systems used to synchronize game time with real time.
+ * It also contains a system to prevent skipping the night.
+ */
 public class RealTimeSystems {
-    protected static boolean hasMoreMoonPhases() {
-        AssetPack pack = AssetModule.get().getAssetPack("TechTastic:MoreMoonPhases");
-        return pack != null;
-    }
-
-    protected static Phase getMoonPhase(Instant time) {
-        return MoonIllumination.compute().on(time).execute().getClosestPhase();
-    }
-
-    protected static int getGameMoonPhase(Phase phase) {
-        return switch (phase) {
-            case Phase.FULL_MOON -> 0;
-            case Phase.WAXING_GIBBOUS  -> 1;
-            case Phase.FIRST_QUARTER -> 2;
-            case Phase.WAXING_CRESCENT -> 3;
-            case Phase.NEW_MOON -> 4;
-            default -> switch (phase) { // TODO: Special Handlers Later
-                case Phase.WANING_GIBBOUS -> hasMoreMoonPhases() ? 5 : 1;
-                case Phase.LAST_QUARTER -> hasMoreMoonPhases() ? 6 : 2;
-                case Phase.WANING_CRESCENT -> hasMoreMoonPhases() ? 7 : 3;
-                default -> 0;
-            };
-        };
-    }
-
+    /**
+     * This method creates an {@link Instant} based off the provided timezone string which should be parsible by {@link ZoneId}.
+     *
+     * @param timezone
+     * @return The matching {@link Instant}
+     */
     protected static Instant getRealTime(@Nullable String timezone) {
         ZonedDateTime zonedDateTime;
         if (timezone == null) {
             zonedDateTime = ZonedDateTime.now();
         } else {
-            ZoneId zone = ZoneId.of("America/New_York");
+            ZoneId zone = ZoneId.of(timezone);
             zonedDateTime = ZonedDateTime.now(zone);
         }
         return zonedDateTime.toInstant();
     }
 
+    /**
+     * This system is used to set both the game time to real time as well as change the given moon phase to the real life moon phase.
+     * This system also invokes the {@link RealTimeMoonPhaseChangeEvent} to notify other systems of the new values and phase.
+     */
     public static class Init extends StoreSystem<EntityStore> {
         public void onSystemAddedToStore(@Nonnull Store<EntityStore> store) {
             World world = store.getExternalData().getWorld();
             WorldTimeResource worldTimeResource = store.getResource(TimeModule.get().getWorldTimeResourceType());
             Instant realTime = getRealTime(RealTimeSyncConfig.getConfig(world).getTimezone());
             worldTimeResource.setGameTime0(realTime);
-            world.execute(() -> worldTimeResource.setMoonPhase(getGameMoonPhase(getMoonPhase(realTime)), store));
+            world.execute(() -> {
+                MoonIllumination moonIllumination = MoonUtil.getMoonIllumination(realTime);
+                MoonPhase.Phase moonPhase = moonIllumination.getClosestPhase();
+                int gameMoonPhase = MoonUtil.getGameMoonPhase(moonPhase);
+                worldTimeResource.setMoonPhase(gameMoonPhase, store);
+                store.invoke(RealTimeSyncPlugin.get().realTimeMoonPhaseChangeEventType, new RealTimeMoonPhaseChangeEvent(realTime));
+            });
         }
 
         public void onSystemRemovedFromStore(@Nonnull Store<EntityStore> store) {
@@ -91,6 +83,9 @@ public class RealTimeSystems {
         }
     }
 
+    /**
+     * This system is used to lerp the time between the current game time and the real time to prevent jittering using the {@link WorldTimeResource}.
+     */
     public static class Ticking extends TickingSystem<EntityStore> {
         public void tick(float dt, int systemIndex, @Nonnull Store<EntityStore> store) {
             World world = store.getExternalData().getWorld();
@@ -108,6 +103,9 @@ public class RealTimeSystems {
         }
     }
 
+    /**
+     * This system is used to lerp the time between the current game time and the real time to prevent jittering using the {@link TimeResource}.
+     */
     public static class Time extends TickingSystem<EntityStore> {
         public void tick(float dt, int systemIndex, @Nonnull Store<EntityStore> store) {
             World world = store.getExternalData().getWorld();
@@ -125,6 +123,10 @@ public class RealTimeSystems {
         }
     }
 
+    /**
+     * This system is used to prevent players from falling asleep and skipping the night.
+     * This is necessary as it will, infact, skip the night and break our real time updates.
+     */
     public static class NoSleep extends RefChangeSystem<EntityStore, PlayerSomnolence> {
         @Override
         public @NonNull ComponentType<EntityStore, PlayerSomnolence> componentType() {

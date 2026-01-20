@@ -16,7 +16,6 @@
     "Hytale:Beds": "*"
   },
   "LoadBefore": {
-    "TechTastic:MoreMoonPhases": "*"
   },
   "DisabledByDefault": false,
   "IncludesAssetPack": true,
