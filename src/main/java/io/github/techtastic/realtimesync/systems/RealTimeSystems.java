@@ -84,17 +84,13 @@ public class RealTimeSystems {
     }
 
     /**
-     * This system is used to lerp the time between the current game time and the real time to prevent jittering using the {@link WorldTimeResource}.
+     * This system is used to set the current game time to the real time per tick using the {@link WorldTimeResource}.
      */
     public static class Ticking extends TickingSystem<EntityStore> {
         public void tick(float dt, int systemIndex, @Nonnull Store<EntityStore> store) {
             World world = store.getExternalData().getWorld();
             WorldTimeResource worldTimeResource = store.getResource(TimeModule.get().getWorldTimeResourceType());
-            long worldMillis = worldTimeResource.getGameTime().toEpochMilli();
-            long realMillis = getRealTime(RealTimeSyncConfig.getConfig(world).getTimezone()).toEpochMilli();
-            long lerpedMillis = (long) (worldMillis + ((realMillis - worldMillis) * dt));
-            Instant lerpedTime = Instant.ofEpochMilli(lerpedMillis);
-            worldTimeResource.setGameTime0(lerpedTime);
+            worldTimeResource.setGameTime0(getRealTime(RealTimeSyncConfig.getConfig(world).getTimezone()));
         }
 
         @Override
@@ -104,17 +100,13 @@ public class RealTimeSystems {
     }
 
     /**
-     * This system is used to lerp the time between the current game time and the real time to prevent jittering using the {@link TimeResource}.
+     * This system is used to set the current game time to the real time per tick using the {@link TimeResource}.
      */
     public static class Time extends TickingSystem<EntityStore> {
         public void tick(float dt, int systemIndex, @Nonnull Store<EntityStore> store) {
             World world = store.getExternalData().getWorld();
             TimeResource timeResource = store.getResource(TimeModule.get().getTimeResourceType());
-            long worldMillis = timeResource.getNow().toEpochMilli();
-            long realMillis = getRealTime(RealTimeSyncConfig.getConfig(world).getTimezone()).toEpochMilli();
-            long lerpedMillis = (long) (worldMillis + ((realMillis - worldMillis) * dt));
-            Instant lerpedTime = Instant.ofEpochMilli(lerpedMillis);
-            store.getResource(TimeModule.get().getTimeResourceType()).setNow(lerpedTime);
+            timeResource.setNow(getRealTime(RealTimeSyncConfig.getConfig(world).getTimezone()));
         }
 
         @Override
