@@ -2,6 +2,9 @@ package io.github.techtastic.realtimesync;
 
 import com.hypixel.hytale.component.event.WorldEventType;
 import com.hypixel.hytale.logger.HytaleLogger;
+import com.hypixel.hytale.server.core.command.system.AbstractCommand;
+import com.hypixel.hytale.server.core.command.system.CommandManager;
+import com.hypixel.hytale.server.core.modules.time.TimeModule;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.universe.world.WorldConfig;
@@ -9,6 +12,10 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import io.github.techtastic.realtimesync.config.RealTimeSyncConfig;
 import io.github.techtastic.realtimesync.event.ecs.RealTimeMoonPhaseChangeEvent;
 import io.github.techtastic.realtimesync.systems.RealTimeSystems;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+
+import java.lang.reflect.Field;
 
 /**
  * This class is the main class form the Real Time Sync plugin.
@@ -37,6 +44,15 @@ public class RealTimeSyncPlugin extends JavaPlugin {
         this.getEntityStoreRegistry().registerSystem(new RealTimeSystems.Ticking());
         this.getEntityStoreRegistry().registerSystem(new RealTimeSystems.Time());
         this.getEntityStoreRegistry().registerSystem(new RealTimeSystems.NoSleep());
+
+        AbstractCommand timeCommand = CommandManager.get().getCommandRegistration().get("time");
+        timeCommand.getSubCommands().clear();
+        try {
+            Class<AbstractCommand> clazz = AbstractCommand.class;
+            Field field = clazz.getDeclaredField("variantCommands");
+            field.setAccessible(true);
+            field.set(timeCommand, new Int2ObjectOpenHashMap());
+        } catch (Exception ignored) {}
     }
 
     /**

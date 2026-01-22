@@ -90,7 +90,12 @@ public class RealTimeSystems {
         public void tick(float dt, int systemIndex, @Nonnull Store<EntityStore> store) {
             World world = store.getExternalData().getWorld();
             WorldTimeResource worldTimeResource = store.getResource(TimeModule.get().getWorldTimeResourceType());
-            worldTimeResource.setGameTime0(getRealTime(RealTimeSyncConfig.getConfig(world).getTimezone()));
+            long worldMillis = worldTimeResource.getGameTime().toEpochMilli();
+            long realMillis = getRealTime(RealTimeSyncConfig.getConfig(world).getTimezone()).toEpochMilli();
+            long lerpedMillis = (long) (worldMillis + ((realMillis - worldMillis) * dt));
+            Instant lerpedTime = Instant.ofEpochMilli(lerpedMillis);
+            worldTimeResource.setGameTime0(lerpedTime);
+            //worldTimeResource.setGameTime0(getRealTime(RealTimeSyncConfig.getConfig(world).getTimezone()));
         }
 
         @Override
@@ -106,7 +111,12 @@ public class RealTimeSystems {
         public void tick(float dt, int systemIndex, @Nonnull Store<EntityStore> store) {
             World world = store.getExternalData().getWorld();
             TimeResource timeResource = store.getResource(TimeModule.get().getTimeResourceType());
-            timeResource.setNow(getRealTime(RealTimeSyncConfig.getConfig(world).getTimezone()));
+            long worldMillis = timeResource.getNow().toEpochMilli();
+            long realMillis = getRealTime(RealTimeSyncConfig.getConfig(world).getTimezone()).toEpochMilli();
+            long lerpedMillis = (long) (worldMillis + ((realMillis - worldMillis) * dt));
+            Instant lerpedTime = Instant.ofEpochMilli(lerpedMillis);
+            timeResource.setNow(lerpedTime);
+            //timeResource.setNow(getRealTime(RealTimeSyncConfig.getConfig(world).getTimezone()));
         }
 
         @Override
